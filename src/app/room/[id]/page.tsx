@@ -1,71 +1,84 @@
 "use client";
-import { useSearchParams, useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useSearchParams, useParams, useRouter } from "next/navigation";
 import ParticipantList from "../../../components/ParticipantList";
 import Card from "@/components/Card";
 import { Button } from "@/components/ui/button";
 import { useWebSocket } from "@/context/WebSocketContext";
-import { useEffect, useState } from "react";
+import { Participant } from "@/../server/server";
+import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function RoomPage() {
   const { id } = useParams();
   const search = useSearchParams();
-  const name = search.get("name") || "Anonymous";
+  const name = search.get("name");
   const socket = useWebSocket();
+  const router = useRouter();
 
-  const [participants, setParticipants] = useState<Record<string, string>>({});
-  const [votes, setVotes] = useState<Record<string, string>>({});
-  const [revealed, setRevealed] = useState(false);
-
+  const [participants, setParticipants] = useState<Record<string, Participant>>(
+    {}
+  );
   // join room and reset reveal
   useEffect(() => {
+    if (!name) {
+      router.push(`/?session=${id}`);
+    }
     if (socket) {
-      setRevealed(false);
       socket.emit("join", { roomId: id, name });
     }
-  }, [socket]);
+  }, [id, name, router, socket]);
 
-  // listen for participants, votes, and reveal events
   useEffect(() => {
     socket?.on("participants", setParticipants);
-    socket?.on("votes", (newVotes: Record<string, string>) => {
-      setVotes(newVotes);
-    });
-    socket?.on("reveal", (flag: boolean) => setRevealed(flag));
     return () => {
       socket?.off("participants");
-      socket?.off("votes");
-      socket?.off("reveal");
     };
   }, [socket, participants]);
 
   const castVote = (point: string) => {
-    setRevealed(false);
     socket?.emit("vote", { roomId: id, vote: point });
   };
 
   const resetVotes = () => {
-    setRevealed(false);
     socket?.emit("reset", { roomId: id });
   };
 
+  console.log("Participants:", participants);
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-semibold mb-2">Room: {id}</h2>
-      <ParticipantList
-        participants={participants}
-        votes={votes}
-        reveal={revealed}
-      />
-      <div className="grid grid-cols-4 gap-4 mt-4">
-        {["1", "2", "3", "5", "8", "13", "?"].map((p) => (
-          <Card key={p} value={p} onClick={() => castVote(p)} />
-        ))}
-      </div>
-      <div className="mt-6 flex justify-center">
-        <Button onClick={resetVotes} className="bg-red-500 text-white">
+    <div className="p-4 flex flex-row min-h-screen bg-neutral-100">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white rounded-lg shadow-md p-4 mr-8 flex-shrink-0 h-fit">
+        <div className="flex flex-row gap-2 mb-4 items-center">
+          <Switch /> <h3>I am moderator!</h3>
+        </div>
+        <div className="flex flex-row gap-4 mb-6">
+          <Avatar>
+            <AvatarImage
+              src="https://github.com/shadcn.png"
+              alt="User Avatar"
+            />
+            <AvatarFallback>Me</AvatarFallback>
+          </Avatar>
+          <div>
+            <h4 className="text-sm font-semibold">{name}</h4>
+            <p className="text-xs text-gray-500">User Status</p>
+          </div>
+        </div>
+        <h2 className="text-md text-gray-500 mb-1">Players:</h2>
+        <ParticipantList participants={participants} />
+      </aside>
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col items-center">
+        <div className="flex flex-wrap justify-center gap-4 w-xl bg-neutral-200 p-4 rounded-lg shadow-md">
+          {["1", "2", "3", "5", "8", "13", "?"].map((p) => (
+            <Card key={p} value={p} onClick={() => castVote(p)} />
+          ))}
+        </div>
+        <Button className="mt-6" onClick={resetVotes}>
           Reset Votes
         </Button>
-      </div>
+      </main>
     </div>
   );
 }

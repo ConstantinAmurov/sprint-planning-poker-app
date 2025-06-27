@@ -1,10 +1,14 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
 
 export default function LobbyPage() {
+  const search = useSearchParams();
+  const session = search.get("session");
+  const isRedirect = session !== null;
+
   const [name, setName] = useState("");
   const [roomId, setRoomId] = useState("");
   const router = useRouter();
@@ -15,8 +19,8 @@ export default function LobbyPage() {
   };
 
   const joinRoom = () => {
-    if (!roomId) return;
-    router.push(`/room/${roomId}?name=${encodeURIComponent(name)}`);
+    const room = isRedirect ? session : roomId;
+    router.push(`/room/${room}?name=${encodeURIComponent(name)}`);
   };
 
   return (
@@ -31,17 +35,26 @@ export default function LobbyPage() {
       <div className="flex flex-col w-full max-w-xs space-y-2">
         <input
           className="border rounded p-2"
-          value={roomId}
+          value={isRedirect ? session : roomId}
+          disabled={isRedirect}
           onChange={(e) => setRoomId(e.target.value)}
           placeholder="Enter Room ID"
         />
-        <Button onClick={joinRoom} disabled={!name || !roomId}>
+        <Button
+          onClick={joinRoom}
+          disabled={isRedirect ? false : !name || !roomId}
+        >
           Join Existing Room
         </Button>
-        <div className="text-center text-sm text-gray-500">or</div>
-        <Button onClick={createRoom} disabled={!name}>
-          Create New Room
-        </Button>
+
+        {!isRedirect && (
+          <>
+            <div className="text-center text-sm text-gray-500">or</div>
+            <Button onClick={createRoom} disabled={!name}>
+              Create New Room
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

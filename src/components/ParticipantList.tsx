@@ -1,29 +1,23 @@
 "use client";
-import Card from "./Card";
+import { Participant } from "../../server/server";
 
 interface ParticipantListProps {
-  participants: Record<string, string>;
-  votes: Record<string, string>;
-  reveal: boolean;
+  participants: Record<string, Participant>;
 }
 
 export default function ParticipantList({
   participants,
-  votes,
-  reveal,
 }: Readonly<ParticipantListProps>) {
   return (
-    <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
-      {Object.entries(participants).map(([id, name]) => {
-        const vote = votes[id];
-        const display = reveal ? vote || "-" : "-";
+    <div className="flex flex-col">
+      {Object.entries(participants).map(([id, { name }]) => {
         return (
-          <div key={id} className="flex flex-col items-center">
-            <span className="mb-2 font-medium text-gray-700 dark:text-gray-200">
-              {name}
-            </span>
-            <Card value={display} onClick={() => {}} />
-          </div>
+          <span
+            key={id}
+            className="mb-1 font-medium text-gray-700 dark:text-gray-200"
+          >
+            {name}
+          </span>
         );
       })}
     </div>

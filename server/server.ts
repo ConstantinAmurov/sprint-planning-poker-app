@@ -8,8 +8,9 @@ const port = parseInt(process.env.PORT || '3000', 10);
 const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
 
+export type Participant = { name: string; role: 'creator' | 'participant' }
 interface RoomState {
-    participants: Record<string, string>;
+    participants: Record<string, Participant>;
     votes: Record<string, string>;
 }
 const rooms: Record<string, RoomState> = {};
@@ -24,9 +25,14 @@ app.prepare().then(() => {
     io.on('connection', (socket: Socket) => {
         socket.on('join', ({ roomId, name }) => {
             socket.join(roomId);
+            const existingRoom = !!rooms[roomId];
             rooms[roomId] ||= { participants: {}, votes: {} };
-            rooms[roomId].participants[socket.id] = name;
+            rooms[roomId].participants[socket.id] = {
+                name,
+                role: !existingRoom ? 'creator' : 'participant'
+            };
             rooms[roomId].votes = rooms[roomId].votes || {};
+
             io.to(roomId).emit('participants', rooms[roomId].participants);
             io.to(roomId).emit('votes', rooms[roomId].votes);
             // ensure reveal false on join
@@ -54,12 +60,21 @@ app.prepare().then(() => {
         });
 
         socket.on('disconnecting', () => {
+            console.log('disconnected', socket.id);
             for (const roomId of socket.rooms) {
                 if (rooms[roomId]) {
                     delete rooms[roomId].participants[socket.id];
                     delete rooms[roomId].votes[socket.id];
-                    io.to(roomId).emit('participants', rooms[roomId].participants);
-                    io.to(roomId).emit('votes', rooms[roomId].votes);
+
+                    if (rooms[roomId] && Object.keys(rooms[roomId].participants).length === 0) {
+                        console.log(`Deleting room ${roomId} due to no participants`, rooms[roomId]);
+                        delete rooms[roomId];
+                    }
+                    else {
+                        console.log(`Updating room ${roomId} participants`, rooms[roomId]);
+                        io.to(roomId).emit('participants', rooms[roomId].participants);
+                        io.to(roomId).emit('votes', rooms[roomId].votes);
+                    }
                 }
             }
         });
