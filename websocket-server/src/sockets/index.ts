@@ -14,10 +14,11 @@ export const socketHandler = (socket: Socket, io: Server): void => {
             role: existingRoom ? 'participant' : 'creator',
         };
         rooms[roomId].votes ||= {};
+        rooms[roomId].isRevealed = false;
 
         io.to(roomId).emit('participants', rooms[roomId].participants);
         io.to(roomId).emit('votes', rooms[roomId].votes);
-        io.to(roomId).emit('reveal', false);
+        io.to(roomId).emit('reveal', rooms[roomId].isRevealed);
     });
 
     socket.on('vote', ({ roomId, vote }: VotePayload) => {
@@ -27,12 +28,6 @@ export const socketHandler = (socket: Socket, io: Server): void => {
         rooms[roomId].votes[socket.id] = vote;
         io.to(roomId).emit('votes', rooms[roomId].votes);
 
-        if (
-            Object.keys(rooms[roomId].votes).length ===
-            Object.keys(rooms[roomId].participants).length
-        ) {
-            io.to(roomId).emit('reveal', true);
-        }
     });
 
     socket.on('reset', ({ roomId }: ResetPayload) => {
@@ -41,6 +36,14 @@ export const socketHandler = (socket: Socket, io: Server): void => {
         rooms[roomId].votes = {};
         io.to(roomId).emit('votes', rooms[roomId].votes);
         io.to(roomId).emit('reveal', false);
+    });
+
+
+    socket.on('reveal', ({ roomId }: { roomId: string }) => {
+
+        if (!rooms[roomId]) return;
+        rooms[roomId].isRevealed = !rooms[roomId].isRevealed;
+        io.to(roomId).emit('reveal', rooms[roomId].isRevealed);
     });
 
     socket.on('disconnecting', () => {

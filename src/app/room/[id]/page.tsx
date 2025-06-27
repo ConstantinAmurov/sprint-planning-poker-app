@@ -1,40 +1,33 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useSearchParams, useParams, useRouter } from "next/navigation";
 import ParticipantList from "../../../components/ParticipantList";
 import Card from "@/components/Card";
 import { Button } from "@/components/ui/button";
 import { useSocket } from "@/context/SocketProvider";
-import { Participant } from "@/types";
-import { Switch } from "@/components/ui/switch";
+import { useRoomStore } from "@/store/useRoomStore"; // import Zustand store
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function RoomPage() {
   const { id } = useParams();
   const search = useSearchParams();
   const name = search.get("name");
+  const currentUser = useCurrentUser();
+  // const { isRevealed } = useRoomStore.getState();
   const socket = useSocket();
   const router = useRouter();
+  const participants = useRoomStore((state) => state.participants);
 
-  const [participants, setParticipants] = useState<Record<string, Participant>>(
-    {}
-  );
-  // join room and reset reveal
   useEffect(() => {
     if (!name) {
       router.push(`/?session=${id}`);
+      return;
     }
     if (socket) {
       socket.emit("join", { roomId: id, name });
     }
   }, [id, name, router, socket]);
-
-  useEffect(() => {
-    socket?.on("participants", setParticipants);
-    return () => {
-      socket?.off("participants");
-    };
-  }, [socket, participants]);
 
   const castVote = (point: string) => {
     socket?.emit("vote", { roomId: id, vote: point });
@@ -44,14 +37,14 @@ export default function RoomPage() {
     socket?.emit("reset", { roomId: id });
   };
 
-  console.log("Participants:", participants);
+  const flipCards = () => {
+    socket?.emit("reveal", { roomId: id });
+  };
+
   return (
     <div className="p-4 flex flex-row min-h-screen bg-neutral-100">
       {/* Sidebar */}
       <aside className="w-64 bg-white rounded-lg shadow-md p-4 mr-8 flex-shrink-0 h-fit">
-        <div className="flex flex-row gap-2 mb-4 items-center">
-          <Switch /> <h3>I am moderator!</h3>
-        </div>
         <div className="flex flex-row gap-4 mb-6">
           <Avatar>
             <AvatarImage
@@ -60,11 +53,22 @@ export default function RoomPage() {
             />
             <AvatarFallback>Me</AvatarFallback>
           </Avatar>
+
           <div>
-            <h4 className="text-sm font-semibold">{name}</h4>
+            <h4 className="text-sm font-semibold">{currentUser?.name}</h4>
             <p className="text-xs text-gray-500">User Status</p>
           </div>
         </div>
+        {currentUser?.role === "creator" && (
+          <div className="flex gap-3 justify-center">
+            <Button className="text-xs" onClick={resetVotes}>
+              Clear votes
+            </Button>
+            <Button className="text-xs" onClick={flipCards}>
+              Flip Cards
+            </Button>
+          </div>
+        )}
         <h2 className="text-md text-gray-500 mb-1">Players:</h2>
         <ParticipantList participants={participants} />
       </aside>
@@ -75,9 +79,6 @@ export default function RoomPage() {
             <Card key={p} value={p} onClick={() => castVote(p)} />
           ))}
         </div>
-        <Button className="mt-6" onClick={resetVotes}>
-          Reset Votes
-        </Button>
       </main>
     </div>
   );

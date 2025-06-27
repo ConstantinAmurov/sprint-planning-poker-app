@@ -11,6 +11,7 @@ type VoteValue = string | number; // adjust based on what a vote can be
 export interface Room {
     participants: Record<string, Participant>; // socket.id -> participant
     votes: Record<string, VoteValue>;          // socket.id -> vote
+    isRevealed?: boolean; // optional, to track if votes are revealed
 }
 
 
