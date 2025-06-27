@@ -8,16 +8,15 @@ export const socketHandler = (socket: Socket, io: Server): void => {
         socket.join(roomId);
 
         const existingRoom = !!rooms[roomId];
-        rooms[roomId] ||= { participants: {}, votes: {} };
+        rooms[roomId] ||= { participants: {} };
         rooms[roomId].participants[socket.id] = {
             name,
             role: existingRoom ? 'participant' : 'creator',
+            vote: undefined
         };
-        rooms[roomId].votes ||= {};
         rooms[roomId].isRevealed = false;
 
         io.to(roomId).emit('participants', rooms[roomId].participants);
-        io.to(roomId).emit('votes', rooms[roomId].votes);
         io.to(roomId).emit('reveal', rooms[roomId].isRevealed);
     });
 
@@ -25,22 +24,24 @@ export const socketHandler = (socket: Socket, io: Server): void => {
         console.log(`Vote received: ${vote}`);
         if (!rooms[roomId]) return;
 
-        rooms[roomId].votes[socket.id] = vote;
-        io.to(roomId).emit('votes', rooms[roomId].votes);
+        rooms[roomId].participants[socket.id].vote = vote;
+        io.to(roomId).emit('participants', rooms[roomId].participants);
 
     });
 
     socket.on('reset', ({ roomId }: ResetPayload) => {
         if (!rooms[roomId]) return;
 
-        rooms[roomId].votes = {};
-        io.to(roomId).emit('votes', rooms[roomId].votes);
+        rooms[roomId].participants[socket.id].vote = undefined;
+        io.to(roomId).emit('participants', rooms[roomId].participants);
         io.to(roomId).emit('reveal', false);
     });
 
 
     socket.on('reveal', ({ roomId }: { roomId: string }) => {
 
+        console.log(rooms)
+        console.log(`Toggling reveal for room ${roomId}`);
         if (!rooms[roomId]) return;
         rooms[roomId].isRevealed = !rooms[roomId].isRevealed;
         io.to(roomId).emit('reveal', rooms[roomId].isRevealed);
@@ -52,15 +53,12 @@ export const socketHandler = (socket: Socket, io: Server): void => {
         for (const roomId of socket.rooms) {
             if (rooms[roomId]) {
                 delete rooms[roomId].participants[socket.id];
-                delete rooms[roomId].votes[socket.id];
-
                 if (Object.keys(rooms[roomId].participants).length === 0) {
                     console.log(`Deleting room ${roomId} due to no participants`);
                     delete rooms[roomId];
                 } else {
                     console.log(`Updating room ${roomId} participants`);
                     io.to(roomId).emit('participants', rooms[roomId].participants);
-                    io.to(roomId).emit('votes', rooms[roomId].votes);
                 }
             }
         }
