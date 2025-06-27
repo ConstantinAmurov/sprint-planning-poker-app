@@ -1,6 +1,6 @@
 import "./globals.css";
 import { ReactNode } from "react";
-import { WebSocketProvider } from "@/context/WebSocketContext";
+import { SocketProvider } from "@/context/SocketProvider";
 
 export const metadata = {
   title: "Planning Poker",
@@ -11,11 +11,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className="bg-neutral-50 dark:bg-gray-900">
-        <header className="bg-neutral-800 p-4 text-white text-lg font-bold shadow-xl">
-          {metadata.title}
-        </header>
-        <WebSocketProvider>{children}</WebSocketProvider>
-        <footer></footer>
+        <SocketProvider>{children}</SocketProvider>
       </body>
     </html>
   );

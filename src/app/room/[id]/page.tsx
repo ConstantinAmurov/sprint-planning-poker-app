@@ -4,8 +4,8 @@ import { useSearchParams, useParams, useRouter } from "next/navigation";
 import ParticipantList from "../../../components/ParticipantList";
 import Card from "@/components/Card";
 import { Button } from "@/components/ui/button";
-import { useWebSocket } from "@/context/WebSocketContext";
-import { Participant } from "@/types/types";
+import { useSocket } from "@/context/SocketProvider";
+import { Participant } from "@/types";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -13,7 +13,7 @@ export default function RoomPage() {
   const { id } = useParams();
   const search = useSearchParams();
   const name = search.get("name");
-  const socket = useWebSocket();
+  const socket = useSocket();
   const router = useRouter();
 
   const [participants, setParticipants] = useState<Record<string, Participant>>(
