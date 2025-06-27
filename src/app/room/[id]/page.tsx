@@ -5,7 +5,7 @@ import ParticipantList from "../../../components/ParticipantList";
 import Card from "@/components/Card";
 import { Button } from "@/components/ui/button";
 import { useWebSocket } from "@/context/WebSocketContext";
-import { Participant } from "@/../server/server";
+import { Participant } from "@/types/types";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 

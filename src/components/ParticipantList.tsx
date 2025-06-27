@@ -1,5 +1,5 @@
 "use client";
-import { Participant } from "../../server/server";
+import type { Participant } from "@/types/types";
 
 interface ParticipantListProps {
   participants: Record<string, Participant>;
