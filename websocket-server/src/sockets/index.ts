@@ -8,7 +8,14 @@ export const socketHandler = (socket: Socket, io: Server): void => {
         socket.join(roomId);
 
         const existingRoom = !!rooms[roomId];
+
         rooms[roomId] ||= { participants: {} };
+
+        if (rooms[roomId].participants[socket.id]) {
+            console.log(`User ${name} already exists in room ${roomId}`);
+            return;
+        }
+
         rooms[roomId].participants[socket.id] = {
             name,
             role: existingRoom ? 'participant' : 'creator',
@@ -18,6 +25,9 @@ export const socketHandler = (socket: Socket, io: Server): void => {
 
         io.to(roomId).emit('participants', rooms[roomId].participants);
         io.to(roomId).emit('reveal', rooms[roomId].isRevealed);
+        console.log(`User ${name} joined room ${roomId}`);
+        console.log(`Participants in room ${roomId}:`, rooms[roomId].participants);
+
     });
 
     socket.on('vote', ({ roomId, vote }: VotePayload) => {
