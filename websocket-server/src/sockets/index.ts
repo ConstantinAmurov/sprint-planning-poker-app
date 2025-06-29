@@ -1,5 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { JoinPayload, ResetPayload, Room, VotePayload } from "../types/types.ts";
+import { allParticipantsVoted } from "../utils/index.ts";
 const rooms: Record<string, Room> = {};
 
 
@@ -37,14 +38,30 @@ export const socketHandler = (socket: Socket, io: Server): void => {
         rooms[roomId].participants[socket.id].vote = vote;
         io.to(roomId).emit('participants', rooms[roomId].participants);
 
+        // Auto-reveal if all participants have voted
+        if (allParticipantsVoted(rooms[roomId])) {
+            rooms[roomId].isRevealed = true;
+            io.to(roomId).emit('reveal', true);
+            console.log(`All participants in room ${roomId} have voted. Revealing cards.`);
+        }
+
     });
 
     socket.on('reset', ({ roomId }: ResetPayload) => {
         if (!rooms[roomId]) return;
 
-        rooms[roomId].participants[socket.id].vote = undefined;
+        // Clear votes for all participants in the room
+        Object.values(rooms[roomId].participants).forEach(participant => {
+            participant.vote = undefined;
+        });
+
+        rooms[roomId].isRevealed = false;
+
+        // Emit updated state
         io.to(roomId).emit('participants', rooms[roomId].participants);
         io.to(roomId).emit('reveal', false);
+
+        console.log(`Room ${roomId} has been reset.`);
     });
 
 
