@@ -34,7 +34,7 @@ export default function RoomPage() {
   const toggleResults = () => socket?.emit("reveal", { roomId: id });
 
   return (
-    <div className="p-4 flex flex-row min-h-screen bg-neutral-100">
+    <div className="p-4 flex flex-row min-h-screen bg-background text-foreground">
       <RoomSidebar
         currentUser={currentUser}
         participants={participants}

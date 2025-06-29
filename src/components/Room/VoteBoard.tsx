@@ -1,4 +1,3 @@
-// components/VoteBoard.tsx
 import Card from "@/components/Card";
 import { VoteValue } from "@/types";
 
@@ -11,14 +10,14 @@ interface VoteBoardProps {
 
 export function VoteBoard({ currentVote, onVote }: Readonly<VoteBoardProps>) {
   return (
-    <div className="flex flex-wrap justify-center gap-4 w-xl bg-neutral-200 p-4 rounded-lg shadow-md">
+    <div className="flex flex-wrap justify-center gap-4 w-xl bg-card p-4 rounded-lg shadow-md">
       {VOTE_OPTIONS.map((point) => (
         <Card
           key={point}
           value={point}
           onClick={() => onVote(point)}
           className={
-            currentVote === point ? "ring-4 ring-blue-500 border-blue-500" : ""
+            currentVote === point ? "ring-4 ring-primary border-primary" : ""
           }
         />
       ))}

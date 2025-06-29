@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ParticipantList from "../ParticipantList";
 import { Participant } from "@/types";
+import { DarkModeToggle } from "../DarkModeToggle";
 
 interface RoomSidebarProps {
   currentUser?: Participant;
@@ -20,7 +21,7 @@ export function RoomSidebar({
   onReveal,
 }: Readonly<RoomSidebarProps>) {
   return (
-    <aside className="w-64 bg-white rounded-lg shadow-md p-4 mr-8 flex-shrink-0 h-100%">
+    <aside className="w-64   mr-8 flex-shrink-0 relative h-full bg-card p-4 rounded-lg shadow-md ">
       <div className="flex flex-row gap-4 mb-6">
         <Avatar>
           <AvatarImage src="https://github.com/shadcn.png" alt="User Avatar" />
@@ -28,12 +29,12 @@ export function RoomSidebar({
         </Avatar>
         <div>
           <h4 className="text-sm font-semibold">{currentUser?.name}</h4>
-          <p className="text-xs text-gray-500">{currentUser?.role}</p>
+          <p className="text-xs text-muted-foreground">{currentUser?.role}</p>
         </div>
       </div>
 
       {currentUser?.role === "creator" && (
-        <div className="flex gap-3 justify-center">
+        <div className="flex gap-3 justify-center mb-4">
           <Button className="text-xs" onClick={onReset}>
             Clear votes
           </Button>
@@ -43,8 +44,11 @@ export function RoomSidebar({
         </div>
       )}
 
-      <h2 className="text-md text-gray-500 mb-1 mt-6">Players:</h2>
+      <h2 className="text-md text-muted-foreground mb-1 mt-6">Players:</h2>
       <ParticipantList participants={participants} revealVotes={isRevealed} />
+      <div className="mt-6">
+        <DarkModeToggle />
+      </div>
     </aside>
   );
 }
