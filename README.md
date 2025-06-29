@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js Planning Poker Project
+
+This project is a real-time Planning Poker estimation tool built with [Next.js](https://nextjs.org) and WebSockets. It was bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- **Node.js** (v16 or newer recommended)
+- **npm**, **yarn**, **pnpm**, or **bun** installed
+
+---
+
+## Installation & Setup
+
+### Install Dependencies
+
+To install the necessary project dependencies, run one of the following commands in your terminal:
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+# or
+bun install
+```
+
+### Running the Application
+
+You need to run both the Next.js development server and the WebSocket server for the application to function correctly.
+
+1. Run the Next.js Development Server
+
+   Start the Next.js frontend by running:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Run the WebSocket Server
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Navigate into the websocket-server directory, install its dependencies, and then start the server:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cd websocket-server
+npm install
+npm run dev
+```
 
-## Learn More
+Once both servers are running, open your web browser and go to:
 
-To learn more about Next.js, take a look at the following resources:
+```
+http://localhost:3000
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## How to Use
 
-## Deploy on Vercel
+Visit the Application: Navigate to http://localhost:3000.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Create or Join a Room: Enter a name and a room ID to either join an existing room or create a new one.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Example URL: http://localhost:3000/room/my-room?name=Alice
+
+Invite Teammates: Share the room ID with your teammates. They can add use it to join the existing room.
+
+Cast Votes: Click on a card to cast your vote. You have the flexibility to change your vote at any time until the results are revealed.
+
+Reveal & Reset: The room creator has the ability to reveal votes once all participants have cast theirs. To start a new estimation round, use the "Clear votes" button.
+
+## Project Highlights
+
+✅ Real-time vote synchronization via WebSocket
+
+🎴 Cards are hidden until all users have voted
+
+✨ Automatic reveal when all votes are in
+
+🎉 Emoji reactions on reveal
+
+🌙 Dark mode with smooth transitions
+
+📱 Mobile-responsive layout
+
+🌀 Animations powered by Tailwind CSS
