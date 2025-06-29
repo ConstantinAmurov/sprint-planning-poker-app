@@ -10,7 +10,7 @@ interface VoteBoardProps {
 
 export function VoteBoard({ currentVote, onVote }: Readonly<VoteBoardProps>) {
   return (
-    <div className="flex flex-wrap justify-center gap-4 w-xl bg-card p-4 rounded-lg shadow-md">
+    <div className="flex flex-wrap justify-center gap-4 bg-card p-4 rounded-lg shadow-md">
       {VOTE_OPTIONS.map((point) => (
         <Card
           key={point}

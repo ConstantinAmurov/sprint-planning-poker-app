@@ -6,6 +6,7 @@ import { Participant } from "@/types";
 import { DarkModeToggle } from "../DarkModeToggle";
 
 interface RoomSidebarProps {
+  className?: string;
   currentUser?: Participant;
   participants: Record<string, Participant>;
   isRevealed: boolean;
@@ -19,9 +20,12 @@ export function RoomSidebar({
   isRevealed,
   onReset,
   onReveal,
+  className = "",
 }: Readonly<RoomSidebarProps>) {
   return (
-    <aside className="w-64   mr-8 flex-shrink-0 relative h-full bg-card p-4 rounded-lg shadow-md ">
+    <aside
+      className={`mr-8 flex-shrink-0 relative h-full bg-card p-4 rounded-lg shadow-md ${className}`}
+    >
       <div className="flex flex-row gap-4 mb-6">
         <Avatar>
           <AvatarImage src="https://github.com/shadcn.png" alt="User Avatar" />
@@ -39,7 +43,7 @@ export function RoomSidebar({
             Clear votes
           </Button>
           <Button className="text-xs" onClick={onReveal}>
-            Show results
+            {isRevealed ? "Hide results" : "Reveal results"}
           </Button>
         </div>
       )}

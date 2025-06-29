@@ -34,16 +34,22 @@ export default function RoomPage() {
   const toggleResults = () => socket?.emit("reveal", { roomId: id });
 
   return (
-    <div className="p-4 flex flex-row min-h-screen bg-background text-foreground">
+    <div className="p-4 flex flex-col md:flex-row min-h-screen bg-background text-foreground">
       <RoomSidebar
         currentUser={currentUser}
         participants={participants}
         isRevealed={isRevealed}
         onReset={resetVotes}
         onReveal={toggleResults}
+        className="w-full md:w-64 mb-6 md:mb-0 md:mr-8"
       />
-      <main className="flex-1 flex flex-col items-center">
+      <main className="flex-1 flex flex-col items-center px-2 md:px-0">
         <VoteBoard currentVote={currentUser?.vote} onVote={castVote} />
+        <p className="mt-4 text-center text-sm text-muted-foreground max-w-md">
+          Select your vote by clicking on one of the cards below. You can change
+          your vote anytime you want. Once all players have voted, the results
+          will be revealed automatically.
+        </p>
       </main>
     </div>
   );
