@@ -1,28 +1,42 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Server, Socket } from "socket.io";
-import { JoinPayload, ResetPayload, Room, VotePayload } from "../types/types.ts";
+import { JoinPayload, Participant, ResetPayload, Room, VotePayload } from "../types/types.ts";
 import { allParticipantsVoted } from "../utils/index.ts";
-const rooms: Record<string, Room> = {};
+let rooms: Record<string, Room> = {};
 
 
 export const socketHandler = (socket: Socket, io: Server): void => {
     socket.on('join', ({ roomId, name }: JoinPayload) => {
         socket.join(roomId);
 
-        const existingRoom = !!rooms[roomId];
+        const currentRoom = rooms[roomId];
 
-        rooms[roomId] ||= { participants: {} };
-
-        if (rooms[roomId].participants[socket.id]) {
+        if (currentRoom?.participants[socket.id]) {
             console.log(`User ${name} already exists in room ${roomId}`);
             return;
         }
 
-        rooms[roomId].participants[socket.id] = {
+        const newParticipant: Participant = {
             name,
-            role: existingRoom ? 'participant' : 'creator',
-            vote: undefined
+            role: currentRoom ? 'participant' : 'creator',
+            vote: undefined,
         };
-        rooms[roomId].isRevealed = false;
+
+        const updatedParticipants = {
+            ...(currentRoom?.participants || {}),
+            [socket.id]: newParticipant,
+        };
+
+        const updatedRoom: Room = {
+            ...currentRoom,
+            participants: updatedParticipants,
+            isRevealed: false,
+        };
+
+        rooms = {
+            ...rooms,
+            [roomId]: updatedRoom,
+        };
 
         io.to(roomId).emit('participants', rooms[roomId].participants);
         io.to(roomId).emit('reveal', rooms[roomId].isRevealed);
@@ -33,31 +47,62 @@ export const socketHandler = (socket: Socket, io: Server): void => {
 
     socket.on('vote', ({ roomId, vote }: VotePayload) => {
         console.log(`Vote received: ${vote}`);
-        if (!rooms[roomId]) return;
+        const currentRoom = rooms[roomId];
+        if (!currentRoom) return;
 
-        rooms[roomId].participants[socket.id].vote = vote;
+        const updatedParticipant = {
+            ...currentRoom.participants[socket.id],
+            vote,
+        };
+
+        const updatedParticipants = {
+            ...currentRoom.participants,
+            [socket.id]: updatedParticipant,
+        };
+
+        const roomWithVote: Room = {
+            ...currentRoom,
+            participants: updatedParticipants,
+        };
+
+        const shouldReveal = allParticipantsVoted(roomWithVote);
+        const finalRoom = shouldReveal ? { ...roomWithVote, isRevealed: true } : roomWithVote;
+
+        rooms = {
+            ...rooms,
+            [roomId]: finalRoom,
+        };
+
         io.to(roomId).emit('participants', rooms[roomId].participants);
 
-        // Auto-reveal if all participants have voted
-        if (allParticipantsVoted(rooms[roomId])) {
-            rooms[roomId].isRevealed = true;
+        if (shouldReveal) {
             io.to(roomId).emit('reveal', true);
             console.log(`All participants in room ${roomId} have voted. Revealing cards.`);
         }
-
     });
 
     socket.on('reset', ({ roomId }: ResetPayload) => {
-        if (!rooms[roomId]) return;
+        const currentRoom = rooms[roomId];
+        if (!currentRoom) return;
 
-        // Clear votes for all participants in the room
-        Object.values(rooms[roomId].participants).forEach(participant => {
-            participant.vote = undefined;
-        });
+        const updatedParticipants = Object.fromEntries(
+            Object.entries(currentRoom.participants).map(([id, participant]) => [
+                id,
+                { ...participant, vote: undefined },
+            ])
+        );
 
-        rooms[roomId].isRevealed = false;
+        const updatedRoom: Room = {
+            ...currentRoom,
+            participants: updatedParticipants,
+            isRevealed: false,
+        };
 
-        // Emit updated state
+        rooms = {
+            ...rooms,
+            [roomId]: updatedRoom,
+        };
+
         io.to(roomId).emit('participants', rooms[roomId].participants);
         io.to(roomId).emit('reveal', false);
 
@@ -69,25 +114,50 @@ export const socketHandler = (socket: Socket, io: Server): void => {
 
         console.log(rooms)
         console.log(`Toggling reveal for room ${roomId}`);
-        if (!rooms[roomId]) return;
-        rooms[roomId].isRevealed = !rooms[roomId].isRevealed;
+        const currentRoom = rooms[roomId];
+        if (!currentRoom) return;
+
+        const updatedRoom = {
+            ...currentRoom,
+            isRevealed: !currentRoom.isRevealed,
+        };
+
+        rooms = {
+            ...rooms,
+            [roomId]: updatedRoom,
+        };
+
         io.to(roomId).emit('reveal', rooms[roomId].isRevealed);
     });
 
     socket.on('disconnecting', () => {
         console.log('disconnected', socket.id);
 
-        for (const roomId of socket.rooms) {
-            if (rooms[roomId]) {
-                delete rooms[roomId].participants[socket.id];
-                if (Object.keys(rooms[roomId].participants).length === 0) {
-                    console.log(`Deleting room ${roomId} due to no participants`);
-                    delete rooms[roomId];
-                } else {
-                    console.log(`Updating room ${roomId} participants`);
-                    io.to(roomId).emit('participants', rooms[roomId].participants);
-                }
+        rooms = Array.from(socket.rooms).reduce((currentRooms, roomId) => {
+            const room = currentRooms[roomId];
+            if (!room) {
+                return currentRooms;
             }
-        }
+
+            const { [socket.id]: _deleted, ...remainingParticipants } = room.participants;
+
+            if (Object.keys(remainingParticipants).length === 0) {
+                console.log(`Deleting room ${roomId} due to no participants`);
+                const { [roomId]: _deletedRoom, ...nextRooms } = currentRooms;
+                return nextRooms;
+            }
+
+            console.log(`Updating room ${roomId} participants`);
+            const updatedRoom: Room = {
+                ...room,
+                participants: remainingParticipants,
+            };
+            io.to(roomId).emit('participants', updatedRoom.participants);
+
+            return {
+                ...currentRooms,
+                [roomId]: updatedRoom,
+            };
+        }, rooms);
     });
 };
