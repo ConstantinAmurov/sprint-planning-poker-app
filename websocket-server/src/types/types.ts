@@ -1,6 +1,6 @@
 
 type Role = 'creator' | 'participant';
-type VoteValue = string | number; // adjust based on what a vote can be
+export type VoteValue = string | number; // adjust based on what a vote can be
 
 export interface Participant {
     name: string;
