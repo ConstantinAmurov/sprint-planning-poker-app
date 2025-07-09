@@ -1,4 +1,4 @@
-import Card from "@/components/Card";
+import Card from "./Card";
 import { VoteValue } from "@/types";
 
 const VOTE_OPTIONS = ["1", "2", "3", "5", "8", "13"];

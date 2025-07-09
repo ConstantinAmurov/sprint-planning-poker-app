@@ -1,9 +1,9 @@
 // components/RoomSidebar.tsx
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import ParticipantList from "../ParticipantList";
+import ParticipantList from "./ParticipantList";
 import { Participant } from "@/types";
-import { DarkModeToggle } from "../DarkModeToggle";
+import { DarkModeToggle } from "./DarkModeToggle";
 
 interface RoomSidebarProps {
   className?: string;

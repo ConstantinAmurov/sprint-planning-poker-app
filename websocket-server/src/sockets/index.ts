@@ -53,15 +53,15 @@ export const socketHandler = (socket: Socket, io: Server): void => {
     socket.on('disconnecting', () => {
         console.log('disconnected', socket.id);
 
-        for (const roomId of socket.rooms) {
-            if (roomId !== socket.id) {
+        [...socket.rooms]
+            .filter((roomId) => roomId !== socket.id)
+            .forEach((roomId) => {
                 const updatedRoom = roomDB.removeParticipant(roomId, socket.id);
                 if (updatedRoom) {
                     io.to(roomId).emit('participants', updatedRoom.participants);
                 } else {
                     console.log(`Room ${roomId} is now empty and has been deleted.`);
                 }
-            }
-        }
+            });
     });
 };

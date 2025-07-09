@@ -15,7 +15,6 @@ export interface Room {
 }
 
 
-
 export interface VotePayload {
     roomId: string;
     vote: VoteValue;

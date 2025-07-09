@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { Participant } from "@/types";
 
-interface RoomState {
+export interface RoomState {
     participants: Record<string, Participant>;
     isRevealed: boolean;
     setParticipants: (p: Record<string, Participant>) => void;

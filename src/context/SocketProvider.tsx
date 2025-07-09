@@ -1,8 +1,15 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { io, Socket } from "socket.io-client";
-import { useRoomStore } from "@/store/useRoomStore"; // import your Zustand store
+import { useRoomStore } from "@/store/useRoomStore";
+import { setupSocketEventListeners } from "@/lib/socket/handlers";
 
 interface SocketContextType {
   socket: Socket | null;
@@ -14,45 +21,26 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
+  const socketValue = useMemo(() => ({ socket }), [socket]);
 
-  // Get Zustand setter function
-  const setParticipants = useRoomStore((state) => state.setParticipants);
-  const setIsRevealed = useRoomStore((state) => state.setIsRevealed);
+  const { setParticipants, setIsRevealed } = useRoomStore();
 
   useEffect(() => {
     const socketInstance = io("http://localhost:3005");
     setSocket(socketInstance);
 
-    // On connection established
-    socketInstance.on("connect", () => {
-      console.log("Socket connected:", socketInstance.id);
-
-      // Example: After connecting, server might send initial participants event
-      // Listen for it here and update Zustand store
-      socketInstance.on("participants", (data) => {
-        console.log("Received participants in provider:", data);
-        setParticipants(data);
-      });
-
-      socketInstance.on("reveal", (isRevealed) => {
-        console.log("Received reveal status in provider:", isRevealed);
-        setIsRevealed(isRevealed);
-      });
-
-      // Optionally, emit join or initial request here if needed
-      // socketInstance.emit("join", { roomId: "some-room-id", name: "some-name" });
+    const cleanupListeners = setupSocketEventListeners(socketInstance, {
+      setParticipants,
+      setIsRevealed,
     });
 
-    // Cleanup on unmount
     return () => {
-      socketInstance.off("participants");
-      socketInstance.off("connect");
-      socketInstance.disconnect();
+      cleanupListeners();
     };
-  }, [setParticipants]);
+  }, [setParticipants, setIsRevealed]);
 
   return (
-    <SocketContext.Provider value={{ socket }}>
+    <SocketContext.Provider value={socketValue}>
       {children}
     </SocketContext.Provider>
   );
