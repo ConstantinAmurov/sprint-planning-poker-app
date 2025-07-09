@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSearchParams, useParams, useRouter } from "next/navigation";
 import { useSocket } from "@/context/SocketProvider";
 import { useRoomStore } from "@/store/useRoomStore";
@@ -15,13 +15,19 @@ export default function RoomPage() {
   const { isRevealed, participants } = useRoomStore();
   const socket = useSocket();
   const router = useRouter();
+  const hasJoined = useRef(false);
 
   useEffect(() => {
     if (!name) {
       router.push(`/?session=${id}`);
       return;
     }
-    socket?.emit("join", { roomId: id, name });
+
+    if (socket && !hasJoined.current) {
+      socket.emit("join", { roomId: id, name });
+      hasJoined.current = true;
+      console.log(`User ${name} joined room ${id}`);
+    }
   }, [id, name, socket, router]);
 
   const castVote = (point: string) => {
