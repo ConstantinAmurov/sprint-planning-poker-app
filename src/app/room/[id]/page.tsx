@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { useSearchParams, useParams, useRouter } from "next/navigation";
-import { useSocket } from "@/context/SocketProvider";
+import { useSocket } from "@/hooks/useSocket";
 import { useRoomStore } from "@/store/useRoomStore";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { RoomSidebar } from "@/components/Room/RoomSideBar";
